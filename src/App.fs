@@ -52,14 +52,14 @@ module Main =
                     <input type="range" min="1" max="20" .value="${txtL}" 
                         @input="${fun (e: Event) -> 
                             let v = float (e.target :?> HTMLInputElement).value
-                            setState({| state with L = v |})}" style="width: 100%;" />
+                            setState({| state with L = v |})}" style="width: 100%%;" />
                 </div>
                 <div>
                     <label>Force: ${txtP} N</label><br/>
                     <input type="range" min="0" max="5000" .value="${txtP}" 
                         @input="${fun (e: Event) -> 
                             let v = float (e.target :?> HTMLInputElement).value
-                            setState({| state with P = v |})}" style="width: 100%;" />
+                            setState({| state with P = v |})}" style="width: 100%%;" />
                 </div>
                 <div style="display: flex; gap: 10px; margin-top: 10px;">
                     <button style="flex: 1; padding: 10px;" @click="${fun _ -> setState({| state with IsCant = true |})}">Cantilever</button>
