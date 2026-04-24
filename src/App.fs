@@ -9,25 +9,7 @@ open Browser.Dom
 
 module App =
 
-    type Material = { Name: string; E: float }
-
-    module Materials =
-        let Steel = { Name = "Acél (S235)"; E = 210.0e9 }
-        let Aluminum = { Name = "Alumínium"; E = 70.0e9 }
-        let All = [ Steel; Aluminum ]
-
     type BeamType = Cantilever | SimplySupported
-
-    let calculate (L: float) (P: float) (a: float) (E: float) (bt: BeamType) (x: float) =
-        let I = 0.0001
-        match bt with
-        | Cantilever ->
-            if x <= a then (P * (x**2.0) * (3.0*a - x)) / (6.0 * E * I)
-            else (P * (a**2.0) * (3.0*x - a)) / (6.0 * E * I)
-        | SimplySupported ->
-            let b = L - a
-            if x <= a then (P * b * x * (L**2.0 - b**2.0 - x**2.0)) / (6.0 * L * E * I)
-            else (P * a * (L - x) * (L**2.0 - a**2.0 - (L - x)**2.0)) / (6.0 * L * E * I)
 
     type State = {
         Length: float
@@ -43,6 +25,22 @@ module App =
         BeamType = SimplySupported
     }
 
+    // A matekot kiszervezzük, hogy ne a HTML-ben kavarjon
+    let calculateY (s: State) (x: float) =
+        let E = 210.0e9
+        let I = 0.0001
+        let L = s.Length
+        let P = s.Force
+        let a = s.ForcePos
+        match s.BeamType with
+        | Cantilever ->
+            if x <= a then (P * (x**2.0) * (3.0*a - x)) / (6.0 * E * I)
+            else (P * (a**2.0) * (3.0*x - a)) / (6.0 * E * I)
+        | SimplySupported ->
+            let b = L - a
+            if x <= a then (P * b * x * (L**2.0 - b**2.0 - x**2.0)) / (6.0 * L * E * I)
+            else (P * a * (L - x) * (L**2.0 - a**2.0 - (L - x)**2.0)) / (6.0 * L * E * I)
+
     let update (render: unit -> unit) (fn: State -> State) =
         state <- fn state
         render()
@@ -52,40 +50,46 @@ module App =
         let _, render = Hook.useState(0)
         let forceUpdate() = render(fun n -> n + 1)
 
-        // Előre kiszámolt értékek, hogy a HTML tiszta maradjon
-        let sL = string state.Length
-        let sF = string state.Force
-        let sFP = string state.ForcePos
+        // Előre legyártjuk a vizuális cuccokat
         let scaleX = 400.0 / state.Length
         let fX = 50.0 + (state.ForcePos * scaleX)
         
         let pts = 
             [0.0 .. 0.5 .. state.Length]
             |> List.map (fun x ->
-                let d = calculate state.Length state.Force state.ForcePos 210.0e9 state.BeamType x
-                sprintf "%f,%f" (50.0 + x * scaleX) (100.0 + d * 100.0))
+                let d = calculateY state x
+                let vx = 50.0 + (x * scaleX)
+                let vy = 100.0 + (d * 100.0)
+                sprintf "%f,%f" vx vy)
             |> String.concat " "
 
+        let valL = string state.Length
+        let valF = string state.Force
+
         html$"""
-        <div style="font-family: sans-serif; padding: 20px; max-width: 500px; margin: auto;">
-            <h3>Gerenda Szimuláció</h3>
+        <div style="font-family: sans-serif; padding: 20px; max-width: 500px; margin: auto; background: #fff; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+            <h2 style="text-align: center; color: #333;">Gerenda Szimulátor</h2>
             
-            <svg width="500" height="200" style="background: #eee; border-radius: 8px;">
-                <polyline points="${pts}" fill="none" stroke="blue" stroke-width="3" />
-                <line x1="${fX}" y1="50" x2="${fX}" y2="95" stroke="red" stroke-width="3" />
+            <svg width="500" height="200" style="background: #fdfdfd; border: 1px solid #eee; display: block; margin: auto;">
+                <polyline points="${pts}" fill="none" stroke="#007bff" stroke-width="3" />
+                <line x1="${fX}" y1="40" x2="${fX}" y2="95" stroke="red" stroke-width="2" />
             </svg>
 
-            <div style="margin-top: 20px;">
-                <label>Hossz: ${sL} m</label><br/>
-                <input type="range" min="1" max="20" .value="${sL}" 
-                    @input="${fun (e: Event) -> update forceUpdate (fun s -> { s with Length = float (e.target :?> HTMLInputElement).value })}" />
-                <br/>
-                <label>Erő: ${sF} N</label><br/>
-                <input type="range" min="0" max="5000" .value="${sF}" 
-                    @input="${fun (e: Event) -> update forceUpdate (fun s -> { s with Force = float (e.target :?> HTMLInputElement).value })}" />
-                <br/><br/>
-                <button @click="${fun _ -> update forceUpdate (fun s -> { s with BeamType = Cantilever })}">Konzol</button>
-                <button @click="${fun _ -> update forceUpdate (fun s -> { s with BeamType = SimplySupported })}">Kéttámaszú</button>
+            <div style="margin-top: 20px; display: grid; gap: 10px;">
+                <div>
+                    <label>Hossz: ${valL} m</label><br/>
+                    <input type="range" min="1" max="20" .value="${valL}" 
+                        @input="${fun (e: Event) -> update forceUpdate (fun s -> { s with Length = float (e.target :?> HTMLInputElement).value })}" style="width:100%" />
+                </div>
+                <div>
+                    <label>Erő: ${valF} N</label><br/>
+                    <input type="range" min="0" max="5000" .value="${valF}" 
+                        @input="${fun (e: Event) -> update forceUpdate (fun s -> { s with Force = float (e.target :?> HTMLInputElement).value })}" style="width:100%" />
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 10px;">
+                    <button style="flex:1" @click="${fun _ -> update forceUpdate (fun s -> { s with BeamType = Cantilever })}">Konzol</button>
+                    <button style="flex:1" @click="${fun _ -> update forceUpdate (fun s -> { s with BeamType = SimplySupported })}">Kéttámaszú</button>
+                </div>
             </div>
         </div>
         """
