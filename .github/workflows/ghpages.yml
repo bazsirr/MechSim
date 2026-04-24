@@ -1,12 +1,9 @@
 name: Deploy to GitHub Pages
-
 on:
   push:
     branches: [ main ]
-
 permissions:
   contents: write
-
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
@@ -24,16 +21,19 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install dependencies
+      - name: Install Fable Tool
+        run: dotnet tool install --global Fable
+
+      - name: Install JS dependencies
+        run: npm install lit
+
+      - name: Build Project
         run: |
           dotnet restore
-          npm install
-
-      - name: Build
-        run: dotnet fable MechSim.fsproj --outDir build
+          dotnet fable MechSim.fsproj --outDir build
 
       - name: Deploy
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          folder: build # A Fable ide generálja a JS fájlokat
+          folder: build
           branch: gh-pages
