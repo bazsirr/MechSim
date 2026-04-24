@@ -51,6 +51,9 @@ module App =
         state <- fn state
         render()
 
+    // Lit event wrapper (szükséges a Fable + Lit template-ekben)
+    let Ev (handler) = handler
+
     [<LitElement("mech-sim")>]
     let MechSim() =
         let _, render = Hook.useState(0)
