@@ -32,7 +32,7 @@ jobs:
       - name: Build Project
         run: |
           dotnet restore
-          /home/runner/.dotnet/tools/dotnet-fable MechSim.fsproj --outDir build
+          dotnet fable MechSim.fsproj --outDir build
           cp index.html build/
 
       - name: Deploy
