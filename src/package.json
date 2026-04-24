@@ -1,0 +1,12 @@
+{
+  "private": true,
+  "scripts": {
+    "build": "dotnet fable src/App.fs --outDir build"
+  },
+  "dependencies": {
+    "lit": "^3.1.2"
+  },
+  "devDependencies": {
+    "fable-compiler": "^4.5.0"
+  }
+}
