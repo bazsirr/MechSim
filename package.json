@@ -7,6 +7,6 @@
     "lit": "^3.1.2"
   },
   "devDependencies": {
-    "fable-compiler": "^4.5.0"
+    "fable-compiler": "4.5.0"
   }
 }
