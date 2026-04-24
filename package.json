@@ -1,5 +1,6 @@
 {
   "private": true,
+  "homepage": "https://bazsirr.github.io/MechSim",
   "scripts": {
     "build": "dotnet fable MechSim.fsproj --outDir build"
   },
