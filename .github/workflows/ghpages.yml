@@ -10,28 +10,22 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
-
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-
-      - name: Install Tools and Deps
-        run: |
-          dotnet tool restore
-          npm install lit
-
-      - name: Build Project
+      - name: Install Fable
+        run: dotnet tool install --global Fable
+      - name: Build
         run: |
           dotnet restore
-          dotnet fable MechSim.fsproj --outDir build
+          npm install lit
+          /home/runner/.dotnet/tools/fable src/App.fs --outDir build
           cp index.html build/
-
       - name: Deploy
         uses: JamesIves/github-pages-deploy-action@v4
         with:
