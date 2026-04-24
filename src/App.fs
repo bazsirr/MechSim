@@ -63,31 +63,19 @@ module App =
         BeamType = SimplySupported
     }
 
-    let renderBeam s =
-        let width = 600.0
-        let height = 200.0
+    let getPoints s =
+        let width = 500.0
         let margin = 50.0
-        let beamY = height / 2.0
-        let scaleX = (width - 2.0 * margin) / s.Length
+        let beamY = 100.0
+        let scaleX = 400.0 / s.Length
         let I = calculateI s.Section
-        
-        let pts = 
-            [0.0 .. 0.1 .. s.Length]
-            |> List.map (fun x ->
-                let d = calculateDeflection s.Length s.Force s.ForcePos s.Material.E I s.BeamType x
-                let vx = margin + (x * scaleX)
-                let vy = beamY + (d * 1000.0)
-                sprintf "%f,%f" vx vy)
-            |> String.concat " "
-
-        let forceX = margin + s.ForcePos * scaleX
-        
-        html$"""
-        <svg width="600" height="200" style="background: #f0f0f0; border-radius: 8px;">
-            <polyline points="${pts}" fill="none" stroke="#2c3e50" stroke-width="4" />
-            <line x1="${forceX}" y1="${beamY - 40.0}" x2="${forceX}" y2="${beamY - 5.0}" stroke="red" stroke-width="3" />
-        </svg>
-        """
+        [0.0 .. 0.1 .. s.Length]
+        |> List.map (fun x ->
+            let d = calculateDeflection s.Length s.Force s.ForcePos s.Material.E I s.BeamType x
+            let vx = margin + (x * scaleX)
+            let vy = beamY + (d * 1000.0)
+            sprintf "%f,%f" vx vy)
+        |> String.concat " "
 
     let update (render: unit -> unit) (fn: State -> State) =
         state <- fn state
@@ -97,26 +85,33 @@ module App =
     let MechSim() =
         let _, render = Hook.useState(0)
         let forceUpdate() = render(fun n -> n + 1)
+        let pts = getPoints state
+        let fX = 50.0 + (state.ForcePos * (400.0 / state.Length))
 
         html$"""
-        <div style="font-family: sans-serif; padding: 20px; max-width: 800px; margin: auto;">
-            <h1>Gerenda Szimulátor</h1>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; background: #ecf0f1; padding: 20px; border-radius: 8px;">
-                <div>
-                    <label>Hossz: ${state.Length}m</label><br/>
-                    <input type="range" min="1" max="20" .value="${string state.Length}" @input="${fun (e: Event) -> update forceUpdate (fun s -> { s with Length = float (e.target :?> HTMLInputElement).value })}" />
-                </div>
-                <div>
-                    <label>Erő: ${state.Force}N</label><br/>
-                    <input type="range" min="0" max="10000" .value="${string state.Force}" @input="${fun (e: Event) -> update forceUpdate (fun s -> { s with Force = float (e.target :?> HTMLInputElement).value })}" />
-                </div>
-                <div>
-                    <button @click="${fun _ -> update forceUpdate (fun s -> { s with BeamType = Cantilever })}">Konzolos</button>
-                    <button @click="${fun _ -> update forceUpdate (fun s -> { s with BeamType = SimplySupported })}">Kéttámaszú</button>
-                </div>
+        <div style="font-family: sans-serif; padding: 20px; max-width: 600px; margin: auto; background: white; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <h2 style="color: #2c3e50; text-align: center;">Gerenda Szimulátor</h2>
+            
+            <div style="text-align: center; margin-bottom: 20px;">
+                <svg width="500" height="200" style="background: #f8f9fa; border: 1px solid #dee2e6;">
+                    <polyline points="${pts}" fill="none" stroke="#3498db" stroke-width="3" />
+                    <line x1="${fX}" y1="60" x2="${fX}" y2="95" stroke="red" stroke-width="2" />
+                </svg>
             </div>
-            <div style="margin-top: 20px; text-align: center;">
-                ${renderBeam state}
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div>
+                    <label>Hossz: ${string state.Length}m</label>
+                    <input type="range" min="1" max="20" .value="${string state.Length}" @input="${fun (e: Event) -> update forceUpdate (fun s -> { s with Length = float (e.target :?> HTMLInputElement).value })}" style="width: 100%;" />
+                    
+                    <label>Erő: ${string state.Force}N</label>
+                    <input type="range" min="0" max="10000" .value="${string state.Force}" @input="${fun (e: Event) -> update forceUpdate (fun s -> { s with Force = float (e.target :?> HTMLInputElement).value })}" style="width: 100%;" />
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <button @input="${fun _ -> update forceUpdate (fun s -> { s with BeamType = Cantilever })}">Konzolos</button>
+                    <button @input="${fun _ -> update forceUpdate (fun s -> { s with BeamType = SimplySupported })}">Kéttámaszú</button>
+                    <p style="font-size: 0.8em; color: #6c757d;">Anyag: ${state.Material.Name}</p>
+                </div>
             </div>
         </div>
         """
