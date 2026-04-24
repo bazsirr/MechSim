@@ -21,13 +21,10 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install Fable
+      - name: Install Tools and Deps
         run: |
-          dotnet tool install --global Fable
-          echo "/home/runner/.dotnet/tools" >> $GITHUB_PATH
-
-      - name: Install Dependencies
-        run: npm install lit
+          dotnet tool restore
+          npm install lit
 
       - name: Build Project
         run: |
